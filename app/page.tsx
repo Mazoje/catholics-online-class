@@ -133,7 +133,7 @@ export default function LandingPage() {
               <div className="absolute inset-3 border border-[#998443]/20 pointer-events-none z-10" />
               
               <Image 
-                src="/post.png" 
+                src="/poster.png" 
                 alt="St. Thomas Aquinas - Catholics Online Class"
                 fill
                 priority
