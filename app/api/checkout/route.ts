@@ -10,7 +10,7 @@ export async function POST(request: Request) {
       public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY, 
       tx_ref: `tx-${Date.now()}`,
       amount: Number(amount),
-      currency: 'USD',
+      currency: 'NGN',
       redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/verify`,
       customer: {
         email: email,
