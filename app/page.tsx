@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 export default function LandingPage() {
+  const [amount, setAmount] = useState<string>("20"); // Defaults to 20, but can be changed
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -28,7 +29,7 @@ export default function LandingPage() {
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, amount }), // 👈 FIX: Added amount here
       });
 
       if (!response.ok) {
@@ -52,11 +53,10 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#000F32]">
    
-      {/* 1. Fully Responsive Navigation Bar - Updated background to match logo box exactly */}
-      <nav className="sticky top-0 z-50 bg-white  border-b border-[#998443]/20 shadow-sm backdrop-blur-md bg-[#FDFBF7]/95">
+      {/* 1. Fully Responsive Navigation Bar */}
+      <nav className="sticky top-0 z-50 border-b border-[#998443]/20 shadow-sm backdrop-blur-md bg-[#FDFBF7]/95">
         <div className="max-w-6xl mx-auto px-3 sm:px-6 h-16 sm:h-20 md:h-24 flex items-center justify-between gap-4">
           
-          {/* Responsive Logo Container */}
           <a href="#" className="relative w-60 h-20 sm:w-56 sm:h-12 md:w-64 md:h-14 flex-shrink-0 transition-transform hover:scale-[1.01]">
             <Image
               src="/logo-dark-removebg.png"
@@ -68,13 +68,11 @@ export default function LandingPage() {
             />
           </a>
 
-          {/* Quick Links */}
           <div className="hidden md:flex items-center gap-8 font-medium text-sm text-[#000F32]/80">
             <a href="#program-details" className="hover:text-[#670001] transition-colors">The Program</a>
             <a href="#admission-form" className="hover:text-[#670001] transition-colors">Admissions</a>
-            </div>
+          </div>
 
-          {/* Header Action Button */}
           <div>
             <Link 
               href="/admin" 
@@ -86,12 +84,11 @@ export default function LandingPage() {
         </div>
       </nav>
   
-      {/* 2. Hero Banner with Contrast Logo Mark */}
+      {/* 2. Hero Banner */}
       <header className="bg-[#670001] text-white py-16 md:py-24 px-4 relative overflow-hidden border-b-4 border-[#998443]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(153,132,67,0.2)_0%,transparent_60%)]" />
         
         <div className="relative max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
-          {/* Left Column: Core Message */}
           <div className="flex flex-col items-start text-left">
             
             <div className="relative w-70 h-25 sm:w-56 sm:h-12 md:w-64 md:h-14 mb-6 opacity-95">
@@ -116,7 +113,7 @@ export default function LandingPage() {
                 href="#admission-form"
                 className="bg-[#998443] hover:bg-[#857239] text-[#000F32] font-semibold px-8 py-3.5 rounded transition-all tracking-wide shadow-md"
               >
-                Apply & Register ($20)
+                Apply & Register {/* 👈 Removed hardcoded $20 */}
               </a>
               <a
                 href="#program-details"
@@ -127,7 +124,6 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Right Column: Hero Art / Image Container */}
           <div className="relative flex justify-center lg:justify-end">
             <div className="relative w-full max-w-md aspect-[3/4] bg-[#000F32] rounded-lg shadow-2xl p-2 border-2 border-[#998443]/40 overflow-hidden group">
               <div className="absolute inset-3 border border-[#998443]/20 pointer-events-none z-10" />
@@ -195,6 +191,23 @@ export default function LandingPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* 👈 FIX: Moved the Amount Field inside the Form Tag */}
+            <div>
+              <label htmlFor="amount" className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1">
+                Amount to Pay ($)
+              </label>
+              <input
+                id="amount"
+                type="number"
+                min="1"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full border border-gray-200 rounded px-3 py-2.5 bg-[#FDFBF7]/50 focus:outline-none focus:border-[#670001] focus:bg-white text-sm text-black"
+                required
+                placeholder="Enter amount"
+              />
+            </div>
+
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1">Full Name (for certificate)</label>
               <input
@@ -271,7 +284,8 @@ export default function LandingPage() {
               disabled={loading}
               className="w-full bg-[#670001] hover:bg-[#520001] text-white font-medium py-3 rounded transition-colors disabled:opacity-50 mt-2 tracking-wide shadow-sm text-sm"
             >
-              {loading ? "Processing Secure Gateway..." : "Proceed to Secure Payment ($20)"}
+              {/* 👈 FIX: Made the checkout text dynamic to display the state input */}
+              {loading ? "Processing Secure Gateway..." : `Proceed to Secure Payment ($${amount || "0"})`}
             </button>
           </form>
 

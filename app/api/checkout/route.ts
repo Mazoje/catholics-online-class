@@ -2,61 +2,54 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
+    // 1. Extract everything sent from the frontend form
     const body = await request.json();
-    const { fullName, email, country, parishDiocese, primaryRole } = body;
+    const { fullName, email, country, parishDiocese, primaryRole, amount } = body;
 
-    // Validate that all required fields are present
-    if (!fullName || !email || !country || !parishDiocese || !primaryRole) {
-      return new NextResponse("Missing required registration fields", { status: 400 });
-    }
-
-    // Create a unique transaction reference identifier
-    const txRef = `coc-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    // Prepare the payload for Flutterwave's V3 Standard Payment API
-    const flutterwavePayload = {
-      tx_ref: txRef,
-      amount: "20.00",
-      currency: "USD",
-      redirect_url: `${baseUrl}/payment-status`, // <-- updated
+    // 2. PLACE YOUR CONFIG OBJECT HERE
+    const config = {
+      // Use your Flutterwave Secret Key on the backend for security
+      public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY, 
+      tx_ref: `tx-${Date.now()}`,
+      amount: Number(amount), // 👈 Captures the custom amount dynamically
+      currency: 'USD',
+      payment_options: 'card,mobilemoney,ussd',
+      redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/verify`, // Redirects back after payment
       customer: {
-        email: email,
-        name: fullName,
+        email: email,     // 👈 Dynamic email from form
+        name: fullName,   // 👈 Dynamic name from form
       },
       meta: {
-        country,
-        parishDiocese,
-        primaryRole,
+        country: country,
+        parishDiocese: parishDiocese,
+        primaryRole: primaryRole,
       },
       customizations: {
-        title: "Catholic Online Class",
-        description: "Catechist Formation Program Registration Fee",
-        logo: `${process.env.NEXT_PUBLIC_APP_URL}/logo-dark.png`,
+        title: 'Catholic Online Class',
+        description: 'Course Registration Payment',
       },
     };
 
-    // Send the secure request to Flutterwave using your hidden Secret Key
+    // 3. Send this config payload to Flutterwave
     const response = await fetch("https://api.flutterwave.com/v3/payments", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.FLUTTERWAVE_SECRET_KEY}`,
+        Authorization: `Bearer ${process.env.FLUTTERWAVE_SECRET_KEY}`, // Your secret key
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(flutterwavePayload),
+      body: JSON.stringify(config),
     });
 
     const data = await response.json();
 
-    if (data.status === "success" && data.data?.link) {
-      // Return the secure checkout URL back to your frontend form
+    if (data.status === "success") {
+      // Send the payment URL back to the frontend to redirect the user
       return NextResponse.json({ url: data.data.link });
     } else {
-      console.error("Flutterwave API Error:", data);
-      return new NextResponse(data.message || "Payment initialization failed", { status: 500 });
+      return new NextResponse(data.message || "Flutterwave initialization failed", { status: 400 });
     }
-  } catch (error) {
-    console.error("Internal Checkout Error:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+
+  } catch (error: any) {
+    return new NextResponse(error.message || "Internal Server Error", { status: 500 });
   }
 }
