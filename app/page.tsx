@@ -11,6 +11,8 @@ const targetCountries = [
   { name: "Kenya", code: "KES", symbol: "KSh", price: 2600 },
   { name: "United Kingdom", code: "GBP", symbol: "£", price: 16 },
   { name: "Francophone Africa (CFA)", code: "XOF", symbol: "CFA", price: 11000 },
+  { name: "Philippines", code: "USD", symbol: "$", price: 20 }, // 👈 Routes to USD for GCash cards & Global wallets
+  { name: "India", code: "USD", symbol: "$", price: 20 },       // 👈 Routes to USD for Indian cards & Google Pay
   { name: "United States / International", code: "USD", symbol: "$", price: 20 },
 ];
 
