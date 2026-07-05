@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
+// Initializes cleanly now that NEXT_PUBLIC_SUPABASE_URL is fixed in Vercel
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
   process.env.SUPABASE_SERVICE_ROLE_KEY || ""
@@ -26,6 +27,7 @@ export default async function AdminPortal() {
     redirect("/admin/login");
   }
 
+  // 3. Fetch logs directly from the synchronized database table
   const { data: registrations, error } = await supabase
     .from("registrations")
     .select("*")
