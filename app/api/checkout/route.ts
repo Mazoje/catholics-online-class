@@ -15,8 +15,10 @@ export async function POST(request: Request) {
     const tx_ref = `tx-${Date.now()}`;
 
     // FIX 1: Point accurately to NEXT_PUBLIC_SITE_URL so cancel/success maps away from localhost
-    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-
+  const siteUrl = process.env.VERCEL_URL 
+  ? `https://${process.env.VERCEL_URL}` 
+  : "http://localhost:3000";
+  
     const config = {
       public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY, 
       tx_ref: tx_ref,
