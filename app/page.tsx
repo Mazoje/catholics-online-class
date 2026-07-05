@@ -4,12 +4,23 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
+// Define the supported regional currency configurations and pricing tiers
+const targetCountries = [
+  { name: "Nigeria", code: "NGN", symbol: "₦", price: 28500 },
+  { name: "Ghana", code: "GHS", symbol: "GH₵", price: 270 },
+  { name: "United States / Global", code: "USD", symbol: "$", price: 20 },
+  { name: "United Kingdom", code: "GBP", symbol: "£", price: 16 },
+  { name: "Kenya", code: "KES", symbol: "KSh", price: 2600 },
+];
+
 export default function LandingPage() {
-  const [amount, setAmount] = useState<string>("28500"); // Defaults to 20, but can be changed
+  // Set default initial location layout to Nigeria
+  const [selectedRegion, setSelectedRegion] = useState(targetCountries[0]);
+  const [amount, setAmount] = useState<string>(targetCountries[0].price.toString());
+  
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
-    country: "",
     parishDiocese: "",
     primaryRole: "",
   });
@@ -18,6 +29,13 @@ export default function LandingPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // Safely intercept and update layout configurations when country switches
+  const handleCountrySwitch = (countryName: string) => {
+    const region = targetCountries.find((c) => c.name === countryName) || targetCountries[0];
+    setSelectedRegion(region);
+    setAmount(region.price.toString());
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,7 +47,12 @@ export default function LandingPage() {
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, amount }), // 👈 FIX: Added amount here
+        body: JSON.stringify({ 
+          ...formData, 
+          amount, 
+          currency: selectedRegion.code, // Pass native ISO currency to Flutterwave API
+          country: selectedRegion.name 
+        }), 
       });
 
       if (!response.ok) {
@@ -113,7 +136,7 @@ export default function LandingPage() {
                 href="#admission-form"
                 className="bg-[#998443] hover:bg-[#857239] text-[#000F32] font-semibold px-8 py-3.5 rounded transition-all tracking-wide shadow-md"
               >
-                Apply & Register {/* 👈 Removed hardcoded $20 */}
+                Apply & Register
               </a>
               <a
                 href="#program-details"
@@ -190,23 +213,44 @@ export default function LandingPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* 👈 FIX: Moved the Amount Field inside the Form Tag */}
-           <div>
-  <label htmlFor="amount" className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1">
-    Amount to Pay (₦{Number(amount || 0).toLocaleString()}) {/* 👈 Displays with commas here */}
-  </label>
-  <input
-    id="amount"
-    type="number"
-    min="1"
-    value={amount}
-    onChange={(e) => setAmount(e.target.value)}
-    className="w-full border border-gray-200 rounded px-3 py-2.5 bg-[#FDFBF7]/50 focus:outline-none focus:border-[#670001] focus:bg-white text-sm text-black"
-    required
-    placeholder="28500"
-  />
-</div>
+          <form onSubmit={handleSubmit} className="space-y-4 text-black">
+            {/* Country Selection Dropdown */}
+            <div>
+              <label htmlFor="country" className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1">
+                Select Your Country
+              </label>
+              <select
+                id="country"
+                name="country"
+                required
+                value={selectedRegion.name}
+                onChange={(e) => handleCountrySwitch(e.target.value)}
+                className="w-full border border-gray-200 bg-[#FDFBF7]/50 rounded px-3 py-2.5 focus:outline-none focus:border-[#670001] focus:bg-white text-sm"
+              >
+                {targetCountries.map((c) => (
+                  <option key={c.code} value={c.name}>
+                    {c.name} ({c.code})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Dynamic Amount Field reflecting chosen currency profile */}
+            <div>
+              <label htmlFor="amount" className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1">
+                Amount to Pay ({selectedRegion.symbol}{Number(amount || 0).toLocaleString()})
+              </label>
+              <input
+                id="amount"
+                type="number"
+                min="1"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full border border-gray-200 rounded px-3 py-2.5 bg-[#FDFBF7]/50 focus:outline-none focus:border-[#670001] focus:bg-white text-sm text-black"
+                required
+                placeholder={selectedRegion.price.toString()}
+              />
+            </div>
 
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1">Full Name (for certificate)</label>
@@ -234,31 +278,17 @@ export default function LandingPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1">Country</label>
-                <input
-                  type="text"
-                  name="country"
-                  required
-                  value={formData.country}
-                  onChange={handleChange}
-                  className="w-full border border-gray-200 rounded px-3 py-2.5 bg-[#FDFBF7]/50 focus:outline-none focus:border-[#670001] focus:bg-white text-sm"
-                  placeholder="United Kingdom"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1">Parish & Diocese</label>
-                <input
-                  type="text"
-                  name="parishDiocese"
-                  required
-                  value={formData.parishDiocese}
-                  onChange={handleChange}
-                  className="w-full border border-gray-200 rounded px-3 py-2.5 bg-[#FDFBF7]/50 focus:outline-none focus:border-[#670001] focus:bg-white text-sm"
-                  placeholder="St. Mary's Parish"
-                />
-              </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1">Parish & Diocese</label>
+              <input
+                type="text"
+                name="parishDiocese"
+                required
+                value={formData.parishDiocese}
+                onChange={handleChange}
+                className="w-full border border-gray-200 rounded px-3 py-2.5 bg-[#FDFBF7]/50 focus:outline-none focus:border-[#670001] focus:bg-white text-sm"
+                placeholder="St. Mary's Parish"
+              />
             </div>
 
             <div>
@@ -280,14 +310,13 @@ export default function LandingPage() {
             </div>
 
             <button
-  type="submit"
-  disabled={loading}
-  className="w-full bg-[#670001] hover:bg-[#520001] text-white font-medium py-3 rounded transition-colors disabled:opacity-50 mt-2 tracking-wide shadow-sm text-sm"
->
-  {/* 👈 Added .toLocaleString() here to automatically add commas */}
-  {loading ? "Processing Secure Gateway..." : `Proceed to Secure Payment (₦${Number(amount || 0).toLocaleString()})`}
-</button> 
- </form>
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#670001] hover:bg-[#520001] text-white font-medium py-3 rounded transition-colors disabled:opacity-50 mt-2 tracking-wide shadow-sm text-sm"
+            >
+              {loading ? "Processing Secure Gateway..." : `Proceed to Secure Payment (${selectedRegion.symbol}${Number(amount || 0).toLocaleString()})`}
+            </button> 
+          </form>
 
           <div className="mt-4 text-center">
             <span className="text-xs text-gray-400 inline-flex items-center gap-1">

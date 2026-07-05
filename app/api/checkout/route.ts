@@ -3,14 +3,15 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { fullName, email, country, parishDiocese, primaryRole, amount } = body;
+    // Extract currency from the incoming request body
+    const { fullName, email, country, parishDiocese, primaryRole, amount, currency } = body;
 
-    // ⬇️ PLACE THE UPDATED CONFIG BLOCK HERE ⬇️
     const config = {
       public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY, 
       tx_ref: `tx-${Date.now()}`,
       amount: Number(amount),
-      currency: 'NGN',
+      // Fallback to NGN if something goes wrong, otherwise use the selected currency
+      currency: currency || 'NGN', 
       redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/verify`,
       customer: {
         email: email,
@@ -23,11 +24,11 @@ export async function POST(request: Request) {
       },
       customizations: {
         title: 'Catholic Online Class',
-        description: 'Course Registration Payment',
+        description: `Course Registration Payment (${currency || 'NGN'})`,
       },
     };
 
-    // Send this config payload to Flutterwave
+    // Send this dynamic config payload to Flutterwave
     const response = await fetch("https://api.flutterwave.com/v3/payments", {
       method: "POST",
       headers: {
