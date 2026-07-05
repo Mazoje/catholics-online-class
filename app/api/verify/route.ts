@@ -17,7 +17,7 @@ export async function GET(request: Request) {
   console.log("Transaction ID reference:", transaction_id);
   console.log("Database Tx Ref look-up key:", tx_ref);
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const baseUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   if (status === "successful" && transaction_id) {
     try {
@@ -36,17 +36,17 @@ export async function GET(request: Request) {
       if (flwData.status === "success" && flwData.data.status === "successful") {
         console.log("Payment confirmed authentic. Extracting student data...");
         
-        // Extract metadata and customer details sent during checkout initialization
         const txData = flwData.data;
         const meta = txData.meta || {};
 
+        // FIX: Mapped keys directly to snake_case to match your database columns
         const studentRecord = {
           tx_ref: tx_ref || txData.tx_ref,
-          fullName: txData.customer.name,
+          full_name: txData.customer.name,       // 👈 Changed from fullName
           email: txData.customer.email,
           country: meta.country || "Unknown",
-          parishDiocese: meta.parishDiocese || "Not Specified",
-          primaryRole: meta.primaryRole || "Other",
+          parish_diocese: meta.parishDiocese || "Not Specified", // 👈 Changed from parishDiocese
+          primary_role: meta.primaryRole || "Other",     // 👈 Changed from primaryRole
           payment_status: "completed",
           amount: txData.amount,
           currency: txData.currency,
@@ -54,15 +54,14 @@ export async function GET(request: Request) {
 
         console.log("Saving complete student profile to Supabase via upsert...");
         
-        // Use upsert matching on 'tx_ref' so it writes a fresh record if one doesn't exist
         const { error: dbError } = await supabase
           .from("registrations")
           .upsert(studentRecord, { onConflict: "tx_ref" });
 
         if (dbError) {
-          console.error("Supabase Database Save Failure:", dbError.message);
+          console.error("🔴 Supabase Database Save Failure:", dbError.message);
         } else {
-          console.log("Supabase successfully saved completed student registration!");
+          console.log("✅ Supabase successfully saved completed student registration!");
         }
 
         return NextResponse.redirect(`${baseUrl}/success?verified=true`);
@@ -76,5 +75,6 @@ export async function GET(request: Request) {
     console.log("Verification bypassed: URL status parameter was not 'successful' or ID was missing.");
   }
 
+  // This will now catch your manual cancellations perfectly and redirect to your success page with verified=false
   return NextResponse.redirect(`${baseUrl}/success?verified=false`);
 }
