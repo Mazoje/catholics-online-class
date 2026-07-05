@@ -12,7 +12,6 @@ export async function GET(request: Request) {
   const tx_ref = searchParams.get("tx_ref");
   const transaction_id = searchParams.get("transaction_id");
 
-  // TERMINAL LOGS: See if Flutterwave is even reaching your machine
   console.log("======== FLUTTERWAVE CALLBACK DETECTED ========");
   console.log("URL Status parameter:", status);
   console.log("Transaction ID reference:", transaction_id);
@@ -35,17 +34,35 @@ export async function GET(request: Request) {
       console.log("Flutterwave Verification Server Response:", flwData);
 
       if (flwData.status === "success" && flwData.data.status === "successful") {
-        console.log("Payment confirmed authentic. Updating Supabase row...");
+        console.log("Payment confirmed authentic. Extracting student data...");
         
+        // Extract metadata and customer details sent during checkout initialization
+        const txData = flwData.data;
+        const meta = txData.meta || {};
+
+        const studentRecord = {
+          tx_ref: tx_ref || txData.tx_ref,
+          fullName: txData.customer.name,
+          email: txData.customer.email,
+          country: meta.country || "Unknown",
+          parishDiocese: meta.parishDiocese || "Not Specified",
+          primaryRole: meta.primaryRole || "Other",
+          payment_status: "completed",
+          amount: txData.amount,
+          currency: txData.currency,
+        };
+
+        console.log("Saving complete student profile to Supabase via upsert...");
+        
+        // Use upsert matching on 'tx_ref' so it writes a fresh record if one doesn't exist
         const { error: dbError } = await supabase
           .from("registrations")
-          .update({ payment_status: "completed" })
-          .eq("tx_ref", tx_ref);
+          .upsert(studentRecord, { onConflict: "tx_ref" });
 
         if (dbError) {
-          console.error("Supabase Database Update Failure:", dbError.message);
+          console.error("Supabase Database Save Failure:", dbError.message);
         } else {
-          console.log("Supabase successfully updated status to: completed!");
+          console.log("Supabase successfully saved completed student registration!");
         }
 
         return NextResponse.redirect(`${baseUrl}/success?verified=true`);
