@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 export default function LandingPage() {
-  const [amount, setAmount] = useState<string>("20"); // Defaults to 20, but can be changed
+  const [amount, setAmount] = useState<string>("28500"); // Defaults to 20, but can be changed
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -192,21 +192,21 @@ export default function LandingPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* 👈 FIX: Moved the Amount Field inside the Form Tag */}
-            <div>
-             <label htmlFor="amount" className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1">
-  Amount to Pay (₦)
-</label>
-              <input
-                id="amount"
-                type="number"
-                min="1"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="w-full border border-gray-200 rounded px-3 py-2.5 bg-[#FDFBF7]/50 focus:outline-none focus:border-[#670001] focus:bg-white text-sm text-black"
-                required
-                placeholder="Enter amount"
-              />
-            </div>
+           <div>
+  <label htmlFor="amount" className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1">
+    Amount to Pay (₦{Number(amount || 0).toLocaleString()}) {/* 👈 Displays with commas here */}
+  </label>
+  <input
+    id="amount"
+    type="number"
+    min="1"
+    value={amount}
+    onChange={(e) => setAmount(e.target.value)}
+    className="w-full border border-gray-200 rounded px-3 py-2.5 bg-[#FDFBF7]/50 focus:outline-none focus:border-[#670001] focus:bg-white text-sm text-black"
+    required
+    placeholder="28500"
+  />
+</div>
 
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1">Full Name (for certificate)</label>
@@ -280,13 +280,14 @@ export default function LandingPage() {
             </div>
 
             <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#670001] hover:bg-[#520001] text-white font-medium py-3 rounded transition-colors disabled:opacity-50 mt-2 tracking-wide shadow-sm text-sm"
-            >
-              {/* 👈 FIX: Made the checkout text dynamic to display the state input */}
-             {loading ? "Processing Secure Gateway..." : `Proceed to Secure Payment (₦${amount || "0"})`}  </button>
-          </form>
+  type="submit"
+  disabled={loading}
+  className="w-full bg-[#670001] hover:bg-[#520001] text-white font-medium py-3 rounded transition-colors disabled:opacity-50 mt-2 tracking-wide shadow-sm text-sm"
+>
+  {/* 👈 Added .toLocaleString() here to automatically add commas */}
+  {loading ? "Processing Secure Gateway..." : `Proceed to Secure Payment (₦${Number(amount || 0).toLocaleString()})`}
+</button> 
+ </form>
 
           <div className="mt-4 text-center">
             <span className="text-xs text-gray-400 inline-flex items-center gap-1">
