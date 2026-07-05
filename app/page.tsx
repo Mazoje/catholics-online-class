@@ -8,9 +8,10 @@ import Link from "next/link";
 const targetCountries = [
   { name: "Nigeria", code: "NGN", symbol: "₦", price: 28500 },
   { name: "Ghana", code: "GHS", symbol: "GH₵", price: 270 },
-  { name: "United States / Global", code: "USD", symbol: "$", price: 20 },
-  { name: "United Kingdom", code: "GBP", symbol: "£", price: 16 },
   { name: "Kenya", code: "KES", symbol: "KSh", price: 2600 },
+  { name: "United Kingdom", code: "GBP", symbol: "£", price: 16 },
+  { name: "Francophone Africa (CFA)", code: "XOF", symbol: "CFA", price: 11000 },
+  { name: "United States / International", code: "USD", symbol: "$", price: 20 },
 ];
 
 export default function LandingPage() {
