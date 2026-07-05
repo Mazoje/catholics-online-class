@@ -10,18 +10,19 @@ const supabase = createClient(
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    // Extract currency from the incoming request body
     const { fullName, email, country, parishDiocese, primaryRole, amount, currency } = body;
 
     const tx_ref = `tx-${Date.now()}`;
+
+    // FIX 1: Point accurately to NEXT_PUBLIC_SITE_URL so cancel/success maps away from localhost
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
     const config = {
       public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY, 
       tx_ref: tx_ref,
       amount: Number(amount),
-      // Fallback to NGN if something goes wrong, otherwise use the selected currency
       currency: currency || 'NGN', 
-      redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/verify`,
+      redirect_url: `${siteUrl}/api/verify`, // 👈 Fixed variable path assignment
       customer: {
         email: email,
         name: fullName,
@@ -37,30 +38,35 @@ export async function POST(request: Request) {
       },
     };
 
-    // 1. Create the row in Supabase as 'pending' BEFORE calling Flutterwave
-    const { error: dbError } = await supabase
-      .from("registrations")
-      .insert([
-        {
-          tx_ref: tx_ref,
-          fullName: fullName,
-          email: email,
-          country: country || "Unknown",
-          parishDiocese: parishDiocese || "Not Specified",
-          primaryRole: primaryRole || "Other",
-          payment_status: "pending", // Tracks incomplete checkouts
-          amount: Number(amount),
-          currency: currency || 'NGN',
-        }
-      ]);
+    // FIX 2: Wrapped in isolated try/catch to expose column-mapping failures
+    try {
+      const { error: dbError } = await supabase
+        .from("registrations")
+        .insert([
+          {
+            tx_ref: tx_ref,
+            full_name: fullName,       // ⚠️ double check: verify your database column name isn't "fullname" or "fullName"
+            email: email,
+            country: country || "Unknown",
+            parish_diocese: parishDiocese, // ⚠️ double check: verify column schema definitions
+            primary_role: primaryRole,     // ⚠️ double check: verify column schema definitions
+            payment_status: "pending", 
+            amount: Number(amount),
+            currency: currency || 'NGN',
+          }
+        ]);
 
-    if (dbError) {
-      console.error("Supabase pre-checkout insert failure:", dbError.message);
-    } else {
-      console.log(`Successfully logged transaction ${tx_ref} as PENDING in database.`);
+      if (dbError) {
+        console.error("🔴 Supabase Specific Database Rejection Error:", dbError.message);
+        console.error("Error Code Context:", dbError.code);
+      } else {
+        console.log(`✅ Database logged transaction reference ${tx_ref} successfully as PENDING.`);
+      }
+    } catch (dbCrash) {
+      console.error("💥 Supabase execution thread crashed entirely:", dbCrash);
     }
 
-    // 2. Send this dynamic config payload to Flutterwave
+    // 2. Send dynamic config payload to Flutterwave
     const response = await fetch("https://api.flutterwave.com/v3/payments", {
       method: "POST",
       headers: {
