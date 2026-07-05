@@ -193,9 +193,9 @@ export default function LandingPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* 👈 FIX: Moved the Amount Field inside the Form Tag */}
             <div>
-              <label htmlFor="amount" className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1">
-                Amount to Pay ($)
-              </label>
+             <label htmlFor="amount" className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1">
+  Amount to Pay (₦)
+</label>
               <input
                 id="amount"
                 type="number"
@@ -285,8 +285,7 @@ export default function LandingPage() {
               className="w-full bg-[#670001] hover:bg-[#520001] text-white font-medium py-3 rounded transition-colors disabled:opacity-50 mt-2 tracking-wide shadow-sm text-sm"
             >
               {/* 👈 FIX: Made the checkout text dynamic to display the state input */}
-              {loading ? "Processing Secure Gateway..." : `Proceed to Secure Payment ($${amount || "0"})`}
-            </button>
+             {loading ? "Processing Secure Gateway..." : `Proceed to Secure Payment (₦${amount || "0"})`}  </button>
           </form>
 
           <div className="mt-4 text-center">
